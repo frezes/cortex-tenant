@@ -124,3 +124,68 @@ func configLoad(file string) (*config, error) {
 
 	return cfg, nil
 }
+
+func configLoadFromContent(content []byte) (*config, error) {
+	cfg := &config{}
+
+	if err := yaml.UnmarshalStrict(content, cfg); err != nil {
+		return nil, errors.Wrap(err, "Unable to parse config")
+	}
+
+	if err := env.Parse(cfg); err != nil {
+		return nil, errors.Wrap(err, "Unable to parse env vars")
+	}
+
+	if cfg.Listen == "" {
+		cfg.Listen = "127.0.0.1:8081"
+	}
+
+	if cfg.ListenMetricsAddress == "" {
+		cfg.ListenMetricsAddress = "0.0.0.0:9090"
+	}
+
+	if cfg.LogLevel == "" {
+		cfg.LogLevel = "warn"
+	}
+
+	if cfg.Target == "" {
+		cfg.Target = "127.0.0.1:9090"
+	}
+
+	if cfg.Timeout == 0 {
+		cfg.Timeout = 10 * time.Second
+	}
+
+	if cfg.Concurrency == 0 {
+		cfg.Concurrency = 512
+	}
+
+	if cfg.Tenant.Header == "" {
+		cfg.Tenant.Header = "X-Scope-OrgID"
+	}
+
+	if cfg.Tenant.Label == "" {
+		cfg.Tenant.Label = "__tenant__"
+	}
+
+	// Default to the Label if list is empty
+	if len(cfg.Tenant.LabelList) == 0 {
+		cfg.Tenant.LabelList = append(cfg.Tenant.LabelList, cfg.Tenant.Label)
+	}
+
+	if _, err := config_util.NewTLSConfig(&cfg.TLSClientConfig); err != nil {
+		return nil, errors.Wrap(err, "Unable to parse TLS config")
+	}
+
+	if cfg.Auth.Egress.Username != "" {
+		if cfg.Auth.Egress.Password == "" {
+			return nil, fmt.Errorf("egress auth user specified, but the password is not")
+		}
+	}
+
+	if cfg.MaxConnsPerHost == 0 {
+		cfg.MaxConnsPerHost = 64
+	}
+
+	return cfg, nil
+}
