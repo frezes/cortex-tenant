@@ -7,6 +7,7 @@ import (
 
 	"github.com/caarlos0/env/v8"
 	"github.com/pkg/errors"
+	config_util "github.com/prometheus/common/config"
 	fhu "github.com/valyala/fasthttp/fasthttputil"
 	"gopkg.in/yaml.v2"
 )
@@ -28,6 +29,8 @@ type config struct {
 	LogResponseErrors bool          `yaml:"log_response_errors" env:"CT_LOG_RESPONSE_ERRORS"`
 	MaxConnDuration   time.Duration `yaml:"max_connection_duration" env:"CT_MAX_CONN_DURATION"`
 	MaxConnsPerHost   int           `env:"CT_MAX_CONNS_PER_HOST" yaml:"max_conns_per_host"`
+
+	TLSClientConfig config_util.TLSConfig `yaml:"tls_client_config"`
 
 	Auth struct {
 		Egress struct {
@@ -103,6 +106,10 @@ func configLoad(file string) (*config, error) {
 	// Default to the Label if list is empty
 	if len(cfg.Tenant.LabelList) == 0 {
 		cfg.Tenant.LabelList = append(cfg.Tenant.LabelList, cfg.Tenant.Label)
+	}
+
+	if _, err := config_util.NewTLSConfig(&cfg.TLSClientConfig); err != nil {
+		return nil, errors.Wrap(err, "Unable to parse TLS config")
 	}
 
 	if cfg.Auth.Egress.Username != "" {

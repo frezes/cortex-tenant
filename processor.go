@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	config_util "github.com/prometheus/common/config"
 	"github.com/prometheus/prometheus/prompb"
 	fh "github.com/valyala/fasthttp"
 )
@@ -102,8 +103,10 @@ func newProcessor(c config) *processor {
 		Concurrency: c.Concurrency,
 	}
 
+	tlsConfig, _ := config_util.NewTLSConfig(&c.TLSClientConfig)
 	p.cli = &fh.Client{
 		Name:               "cortex-tenant",
+		TLSConfig:          tlsConfig,
 		ReadTimeout:        c.Timeout,
 		WriteTimeout:       c.Timeout,
 		MaxConnWaitTimeout: 1 * time.Second,
