@@ -12,6 +12,13 @@ auth:
     username: foo
     password: bar
 
+tls_client_config:
+  ca_file: ""
+  cert_file: ""
+  key_file: ""
+  server_name: ""
+  insecure_skip_verify: false
+
 log_level: debug
 timeout: 10s
 timeout_shutdown: 0s
